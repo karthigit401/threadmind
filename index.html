@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ThreadMind — AI Outfit Matcher</title>
+  <meta name="description" content="Upload a garment, get AI-powered outfit matches, shop on Amazon, Flipkart & Myntra instantly." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="logo">Thread<span>Mind</span></div>
+      <div class="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#app" class="nav-cta">Try it free</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">AI-Powered · Free · No signup</div>
+      <h1>Your wardrobe,<br><em>completed.</em></h1>
+      <p class="hero-sub">Upload any garment. ThreadMind reads its color, style and occasion — then finds the perfect matching pieces across Amazon, Flipkart and Myntra.</p>
+      <a href="#app" class="hero-btn">Find my match →</a>
+    </div>
+    <div class="hero-visual">
+      <div class="float-card c1">👔 Kerala kasavu mundu</div>
+      <div class="float-card c2">✨ Cream cotton kurta matched</div>
+      <div class="float-card c3">🛍️ 3 platforms · instant links</div>
+    </div>
+  </header>
+
+  <section class="how" id="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Upload your garment</div>
+        <div class="step-desc">Photo of any clothing item — kurta, mundu, jeans, saree, anything.</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Set your preferences</div>
+        <div class="step-desc">Skin tone, occasion, budget, sleeve, fabric, pincode — all customisable.</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Get your matches</div>
+        <div class="step-desc">AI curates 4 perfect pairings with direct shop links on all platforms.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="app-section" id="app">
+    <div class="app-wrap">
+      <div id="input-section">
+        <div class="section-title">Your garment</div>
+        <div class="upload-zone" id="dropzone">
+          <input type="file" accept="image/*" id="fileInput" />
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">Drop your garment photo here</div>
+          <div class="upload-sub">or click to browse · JPG, PNG, WEBP</div>
+        </div>
+        <img id="preview" class="preview-img" alt="preview" />
+
+        <div class="divider"></div>
+        <div class="section-title">Your preferences</div>
+
+        <div class="pref-block">
+          <label class="pref-label">Skin tone</label>
+          <div class="skin-row">
+            <div class="skin-btn" style="background:#FFDAB9" data-tone="fair" title="Fair"></div>
+            <div class="skin-btn" style="background:#D4956A" data-tone="medium" title="Medium"></div>
+            <div class="skin-btn" style="background:#A0522D" data-tone="tan" title="Tan"></div>
+            <div class="skin-btn active" style="background:#6B3A2A" data-tone="dark" title="Dark"></div>
+            <div class="skin-btn" style="background:#3B1F15" data-tone="deep" title="Deep"></div>
+          </div>
+        </div>
+
+        <div class="pref-block">
+          <label class="pref-label">Occasion</label>
+          <div class="tag-row">
+            <button class="tag-btn active">Casual</button>
+            <button class="tag-btn">Wedding</button>
+            <button class="tag-btn">Festival</button>
+            <button class="tag-btn">Office</button>
+            <button class="tag-btn">Party</button>
+            <button class="tag-btn">Pooja</button>
+          </div>
+        </div>
+
+        <div class="filters-grid">
+          <div class="pref-block">
+            <label class="pref-label">Budget</label>
+            <select id="budget">
+              <option>Under ₹500</option>
+              <option selected>₹500 – ₹1,500</option>
+              <option>₹1,500 – ₹3,000</option>
+              <option>₹3,000+</option>
+            </select>
+          </div>
+          <div class="pref-block">
+            <label class="pref-label">Color preference</label>
+            <select id="colorPref">
+              <option value="light">Light / Pastels</option>
+              <option value="white">Crisp White</option>
+              <option value="contrast">Bold Contrast</option>
+              <option value="earthy">Earthy Tones</option>
+              <option value="any">Surprise me</option>
+            </select>
+          </div>
+          <div class="pref-block">
+            <label class="pref-label">Sleeve length</label>
+            <select id="sleeve">
+              <option>Half sleeve</option>
+              <option>Full sleeve</option>
+              <option>Sleeveless</option>
+              <option>Any</option>
+            </select>
+          </div>
+          <div class="pref-block">
+            <label class="pref-label">Fabric</label>
+            <select id="fabric">
+              <option>Cotton</option>
+              <option>Linen</option>
+              <option>Silk</option>
+              <option>Any</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pref-block">
+          <label class="pref-label">Delivery pincode</label>
+          <input type="text" id="pincode" placeholder="e.g. 560068" maxlength="6" value="560068" />
+          <div class="pin-note" id="pinNote">Links will include your pincode where supported</div>
+        </div>
+
+        <div class="pref-block">
+          <label class="pref-label">Shop on</label>
+          <div class="plat-row">
+            <button class="plat-btn active">Amazon</button>
+            <button class="plat-btn active">Flipkart</button>
+            <button class="plat-btn active">Myntra</button>
+          </div>
+        </div>
+
+        <div class="pref-block">
+          <label class="pref-label">Anthropic API key <span class="key-hint">(stored only in your browser)</span></label>
+          <input type="password" id="apiKey" placeholder="sk-ant-..." />
+        </div>
+
+        <div class="divider"></div>
+        <button class="go-btn" id="goBtn">Find my matches →</button>
+        <div class="err-msg" id="errMsg"></div>
+      </div>
+
+      <div id="results-section" style="display:none"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="logo" style="font-size:18px">Thread<span>Mind</span></div>
+      <p>AI-powered outfit matching for Indian fashion · Built with Claude AI</p>
+      <p class="footer-note">Your API key and images never leave your browser. No data is stored.</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
