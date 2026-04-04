@@ -172,6 +172,7 @@ Give exactly 4 suggestions. Inputs: skin tone = ${skinTone}, occasion = ${occasi
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
@@ -179,7 +180,7 @@ Give exactly 4 suggestions. Inputs: skin tone = ${skinTone}, occasion = ${occasi
         'anthropic-dangerous-direct-browser-calls': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20251001',
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userContent }]
@@ -200,7 +201,11 @@ Give exactly 4 suggestions. Inputs: skin tone = ${skinTone}, occasion = ${occasi
     renderResults(result, platforms, pincode);
   } catch (err) {
     resultsEl.style.display = 'none';
-    showError('Error: ' + (err.message || 'Something went wrong. Please try again.'));
+    if (err.message === 'Failed to fetch') {
+      showError('Connection blocked — make sure your API key is correct, you are not on a VPN, and try Chrome or Edge.');
+    } else {
+      showError('Error: ' + (err.message || 'Something went wrong. Please try again.'));
+    }
   }
 
   btn.disabled = false;
