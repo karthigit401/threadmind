@@ -1,8 +1,8 @@
 /* ThreadMind — app.js */
- 
+
 let skinTone = 'dark';
 let imageBase64 = null;
- 
+
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
   initSkinBtns();
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPincode();
   document.getElementById('goBtn').addEventListener('click', findMatches);
 });
- 
+
 /* ── Skin tone ── */
 function initSkinBtns() {
   document.querySelectorAll('.skin-btn').forEach(btn => {
@@ -23,28 +23,28 @@ function initSkinBtns() {
     });
   });
 }
- 
+
 /* ── Occasion tags ── */
 function initTagBtns() {
   document.querySelectorAll('.tag-btn').forEach(btn => {
     btn.addEventListener('click', () => btn.classList.toggle('active'));
   });
 }
- 
+
 /* ── Platform buttons ── */
 function initPlatBtns() {
   document.querySelectorAll('.plat-btn').forEach(btn => {
     btn.addEventListener('click', () => btn.classList.toggle('active'));
   });
 }
- 
+
 /* ── File upload ── */
 function initFileUpload() {
   const input = document.getElementById('fileInput');
   const dropzone = document.getElementById('dropzone');
- 
+
   input.addEventListener('change', e => handleFile(e.target.files[0]));
- 
+
   dropzone.addEventListener('dragover', e => {
     e.preventDefault();
     dropzone.style.borderColor = 'var(--gold)';
@@ -58,7 +58,7 @@ function initFileUpload() {
     if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   });
 }
- 
+
 function handleFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
@@ -73,7 +73,7 @@ function handleFile(file) {
   };
   reader.readAsDataURL(file);
 }
- 
+
 /* ── Pincode ── */
 function initPincode() {
   const input = document.getElementById('pincode');
@@ -84,17 +84,17 @@ function initPincode() {
   input.addEventListener('input', check);
   check();
 }
- 
+
 /* ── Helpers ── */
 function getOccasions() {
   const tags = Array.from(document.querySelectorAll('.tag-btn.active')).map(b => b.textContent);
   return tags.length ? tags.join(', ') : 'Casual';
 }
- 
+
 function getPlatforms() {
   return Array.from(document.querySelectorAll('.plat-btn.active')).map(b => b.textContent);
 }
- 
+
 function buildSearchUrl(platform, query, pincode) {
   const q = encodeURIComponent(query);
   if (platform === 'Amazon') {
@@ -105,24 +105,24 @@ function buildSearchUrl(platform, query, pincode) {
   if (platform === 'Myntra') return `https://www.myntra.com/${encodeURIComponent(query.replace(/\s+/g, '-'))}`;
   return '#';
 }
- 
+
 function showError(msg) {
   const el = document.getElementById('errMsg');
   el.textContent = msg;
 }
- 
+
 function clearError() {
   document.getElementById('errMsg').textContent = '';
 }
- 
+
 /* ── Main: Find matches ── */
 async function findMatches() {
   clearError();
- 
+
   const apiKey = document.getElementById('apiKey').value.trim();
   if (!apiKey) { showError('Please enter your Anthropic API key to continue.'); return; }
   if (!apiKey.startsWith('sk-ant-')) { showError('API key should start with sk-ant-'); return; }
- 
+
   const occasions = getOccasions();
   const budget = document.getElementById('budget').value;
   const colorPref = document.getElementById('colorPref').value;
@@ -130,12 +130,12 @@ async function findMatches() {
   const fabric = document.getElementById('fabric').value;
   const pincode = document.getElementById('pincode').value;
   const platforms = getPlatforms();
- 
+
   if (!platforms.length) { showError('Please select at least one shopping platform.'); return; }
- 
+
   const btn = document.getElementById('goBtn');
   btn.disabled = true;
- 
+
   const resultsEl = document.getElementById('results-section');
   const inputEl = document.getElementById('input-section');
   resultsEl.style.display = 'block';
@@ -145,7 +145,7 @@ async function findMatches() {
       <div class="loading-text">Analysing your garment…</div>
       <div class="loading-sub">Matching styles, colours & occasions</div>
     </div>`;
- 
+
   const systemPrompt = `You are ThreadMind, an expert Indian fashion stylist. Analyse the garment and return ONLY a valid JSON object with NO markdown fences, NO preamble. Structure:
 {
   "garment": { "type": "string", "color": "string", "pattern": "string", "style": "string" },
@@ -161,14 +161,14 @@ async function findMatches() {
   ]
 }
 Give exactly 4 suggestions. Inputs: skin tone = ${skinTone}, occasion = ${occasions}, budget = ${budget}, color preference = ${colorPref}, sleeve = ${sleeve}, fabric = ${fabric}. Prioritise colours that flatter ${skinTone} skin beautifully. Be very specific in item names and search queries.`;
- 
+
   const userContent = imageBase64
     ? [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
         { type: 'text', text: `Analyse this garment. Skin: ${skinTone}, Occasion: ${occasions}, Budget: ${budget}, Color: ${colorPref}, Sleeve: ${sleeve}, Fabric: ${fabric}` }
       ]
     : `No image. Assume white Kerala kasavu mundu with gold border. Skin: ${skinTone}, Occasion: ${occasions}, Budget: ${budget}, Color: ${colorPref}, Sleeve: ${sleeve}, Fabric: ${fabric}. Suggest 4 matching half kurtas.`;
- 
+
   try {
     const response = await fetch('https://hidden-river-ba9f.kgod6900.workers.dev/', {
       method: 'POST',
@@ -184,17 +184,21 @@ Give exactly 4 suggestions. Inputs: skin tone = ${skinTone}, occasion = ${occasi
         messages: [{ role: 'user', content: userContent }]
       })
     });
- 
+
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.error?.message || `API error ${response.status}`);
     }
- 
+
     const data = await response.json();
-    const raw = data.content.find(b => b.type === 'text')?.text || '{}';
+    console.log('API response:', JSON.stringify(data));
+    if (data.error) throw new Error(data.error.message || 'API error');
+    const content = data.content || [];
+    const textBlock = content.find(b => b.type === 'text');
+    const raw = textBlock ? textBlock.text : '{}';
     const clean = raw.replace(/```json|```/g, '').trim();
     const result = JSON.parse(clean);
- 
+
     inputEl.style.display = 'none';
     renderResults(result, platforms, pincode);
   } catch (err) {
@@ -205,26 +209,26 @@ Give exactly 4 suggestions. Inputs: skin tone = ${skinTone}, occasion = ${occasi
       showError('Error: ' + (err.message || 'Something went wrong. Please try again.'));
     }
   }
- 
+
   btn.disabled = false;
 }
- 
+
 /* ── Render results ── */
 function renderResults(result, platforms, pincode) {
   const resultsEl = document.getElementById('results-section');
- 
+
   const platClass = { Amazon: 'amz', Flipkart: 'flip', Myntra: 'myn' };
- 
+
   const shopLinks = (query) =>
     platforms.map(p =>
       `<a href="${buildSearchUrl(p, query, pincode)}" class="shop-link ${platClass[p]}" target="_blank" rel="noopener">${p} →</a>`
     ).join('');
- 
+
   const chips = [result.garment?.type, result.garment?.color, result.garment?.style]
     .filter(Boolean)
     .map(c => `<span class="chip">${c}</span>`)
     .join('');
- 
+
   const cards = (result.suggestions || []).map(s => `
     <div class="sug-card">
       <div class="sug-header">
@@ -235,7 +239,7 @@ function renderResults(result, platforms, pincode) {
       <div class="sug-links">${shopLinks(s.search_query)}</div>
     </div>
   `).join('');
- 
+
   resultsEl.innerHTML = `
     <div class="results-header">
       <div class="results-title">Your style picks</div>
@@ -250,7 +254,7 @@ function renderResults(result, platforms, pincode) {
     ${pincode ? `<div class="pin-footer">Delivery to ${pincode} · Confirm delivery date on each platform after clicking</div>` : ''}
   `;
 }
- 
+
 /* ── Reset ── */
 function resetApp() {
   document.getElementById('input-section').style.display = 'block';
