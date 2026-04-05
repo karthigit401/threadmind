@@ -3,174 +3,334 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ThreadMind — AI Outfit Matcher</title>
-  <meta name="description" content="Upload a garment, get AI-powered outfit matches, shop on Amazon, Flipkart & Myntra instantly." />
+  <title>ThreadMind v2 — AI Fashion Assistant</title>
+  <meta name="description" content="AI outfit matcher, builder, price comparison and more. Powered by Google Gemini." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
+
   <nav class="navbar">
     <div class="nav-inner">
-      <div class="logo">Thread<span>Mind</span></div>
-      <div class="nav-links">
-        <a href="#how">How it works</a>
-        <a href="#app" class="nav-cta">Try it free</a>
+      <div class="logo">Thread<span>Mind</span> <sup class="v2badge">v2</sup></div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="matcher">Match Outfit</button>
+        <button class="nav-tab" data-tab="builder">Outfit Builder</button>
+        <button class="nav-tab" data-tab="finder">Find This Dress</button>
+        <button class="nav-tab" data-tab="palette">Color Palette</button>
+        <button class="nav-tab" data-tab="saved">Saved Looks</button>
       </div>
     </div>
   </nav>
 
-  <header class="hero">
-    <div class="hero-inner">
-      <div class="hero-badge">AI-Powered · Free · No signup</div>
-      <h1>Your wardrobe,<br><em>completed.</em></h1>
-      <p class="hero-sub">Upload any garment. ThreadMind reads its color, style and occasion — then finds the perfect matching pieces across Amazon, Flipkart and Myntra.</p>
-      <a href="#app" class="hero-btn">Find my match →</a>
+  <div class="apibar">
+    <div class="apibar-inner">
+      <span class="apibar-label">Gemini API Key</span>
+      <input type="password" id="apiKey" placeholder="Paste your free Gemini key (AIza...)..." />
+      <a href="https://aistudio.google.com/apikey" target="_blank" class="apibar-link">Get free key →</a>
     </div>
-    <div class="hero-visual">
-      <div class="float-card c1">👔 Kerala kasavu mundu</div>
-      <div class="float-card c2">✨ Cream cotton kurta matched</div>
-      <div class="float-card c3">🛍️ 3 platforms · instant links</div>
+  </div>
+
+  <main class="main">
+
+    <!-- TAB 1: MATCH OUTFIT -->
+    <div class="tab-content active" id="tab-matcher">
+      <div class="page-header">
+        <h1>Match your outfit</h1>
+        <p>Upload a garment · get AI-curated pairings · compare prices across Amazon, Flipkart & Myntra</p>
+      </div>
+      <div class="two-col">
+        <div class="col-left">
+          <div class="card">
+            <div class="card-title">Your garment</div>
+            <div class="upload-zone" id="matcherDrop">
+              <input type="file" accept="image/*" id="matcherFile" />
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">Drop garment photo here</div>
+              <div class="upload-sub">JPG · PNG · WEBP</div>
+            </div>
+            <img id="matcherPreview" class="preview-img" alt="preview" />
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-title">Preferences</div>
+            <div class="pref-row">
+              <label class="pref-label">Skin tone</label>
+              <div class="skin-row" id="matcherSkin">
+                <div class="skin-btn" style="background:#FFDAB9" data-tone="fair" title="Fair"></div>
+                <div class="skin-btn" style="background:#D4956A" data-tone="medium" title="Medium"></div>
+                <div class="skin-btn" style="background:#A0522D" data-tone="tan" title="Tan"></div>
+                <div class="skin-btn active" style="background:#6B3A2A" data-tone="dark" title="Dark"></div>
+                <div class="skin-btn" style="background:#3B1F15" data-tone="deep" title="Deep"></div>
+              </div>
+            </div>
+            <div class="pref-row">
+              <label class="pref-label">Body type</label>
+              <div class="tag-row">
+                <button class="tag-btn active body-tag">Athletic</button>
+                <button class="tag-btn body-tag">Slim</button>
+                <button class="tag-btn body-tag">Regular</button>
+                <button class="tag-btn body-tag">Broad</button>
+                <button class="tag-btn body-tag">Plus</button>
+              </div>
+            </div>
+            <div class="pref-row">
+              <label class="pref-label">Occasion</label>
+              <div class="tag-row">
+                <button class="tag-btn active occ-tag">Casual</button>
+                <button class="tag-btn occ-tag">Wedding</button>
+                <button class="tag-btn occ-tag">Festival</button>
+                <button class="tag-btn occ-tag">Office</button>
+                <button class="tag-btn occ-tag">Party</button>
+                <button class="tag-btn occ-tag">Pooja</button>
+              </div>
+            </div>
+            <div class="filters-grid">
+              <div>
+                <label class="pref-label">Budget</label>
+                <select id="matcherBudget">
+                  <option>Under ₹500</option>
+                  <option selected>₹500–₹1,500</option>
+                  <option>₹1,500–₹3,000</option>
+                  <option>₹3,000+</option>
+                </select>
+              </div>
+              <div>
+                <label class="pref-label">Color preference</label>
+                <select id="matcherColor">
+                  <option value="light">Light / Pastels</option>
+                  <option value="white">Crisp White</option>
+                  <option value="contrast">Bold Contrast</option>
+                  <option value="earthy">Earthy Tones</option>
+                  <option value="any">Surprise me</option>
+                </select>
+              </div>
+              <div>
+                <label class="pref-label">Sleeve</label>
+                <select id="matcherSleeve">
+                  <option>Half sleeve</option>
+                  <option>Full sleeve</option>
+                  <option>Sleeveless</option>
+                  <option>Any</option>
+                </select>
+              </div>
+              <div>
+                <label class="pref-label">Fabric</label>
+                <select id="matcherFabric">
+                  <option>Cotton</option>
+                  <option>Linen</option>
+                  <option>Silk</option>
+                  <option>Any</option>
+                </select>
+              </div>
+            </div>
+            <div class="pref-row">
+              <label class="pref-label">Delivery pincode</label>
+              <input type="text" id="matcherPin" placeholder="560068" maxlength="6" value="560068" style="max-width:150px" />
+            </div>
+            <button class="go-btn" id="matcherBtn">Find my matches →</button>
+            <div class="err-msg" id="matcherErr"></div>
+          </div>
+        </div>
+        <div class="col-right" id="matcherResults">
+          <div class="empty-state"><div class="empty-icon">✨</div><div class="empty-text">Your style picks will appear here</div></div>
+        </div>
+      </div>
     </div>
-  </header>
 
-  <section class="how" id="how">
-    <h2>How it works</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <div class="step-title">Upload your garment</div>
-        <div class="step-desc">Photo of any clothing item — kurta, mundu, jeans, saree, anything.</div>
+    <!-- TAB 2: OUTFIT BUILDER -->
+    <div class="tab-content" id="tab-builder">
+      <div class="page-header">
+        <h1>Complete outfit builder</h1>
+        <p>Get a full head-to-toe look — top, bottom, footwear, accessories — with a total budget breakdown</p>
       </div>
-      <div class="step-arrow">→</div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <div class="step-title">Set your preferences</div>
-        <div class="step-desc">Skin tone, occasion, budget, sleeve, fabric, pincode — all customisable.</div>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <div class="step-title">Get your matches</div>
-        <div class="step-desc">AI curates 4 perfect pairings with direct shop links on all platforms.</div>
+      <div class="two-col">
+        <div class="col-left">
+          <div class="card">
+            <div class="card-title">Your style brief</div>
+            <div class="pref-row">
+              <label class="pref-label">Occasion</label>
+              <div class="tag-row">
+                <button class="tag-btn active builder-occ">Wedding guest</button>
+                <button class="tag-btn builder-occ">Groom</button>
+                <button class="tag-btn builder-occ">Festival</button>
+                <button class="tag-btn builder-occ">Office</button>
+                <button class="tag-btn builder-occ">Date night</button>
+                <button class="tag-btn builder-occ">Pooja</button>
+                <button class="tag-btn builder-occ">Casual outing</button>
+              </div>
+            </div>
+            <div class="filters-grid">
+              <div>
+                <label class="pref-label">Skin tone</label>
+                <select id="builderSkin">
+                  <option value="fair">Fair</option>
+                  <option value="medium">Medium</option>
+                  <option value="tan">Tan</option>
+                  <option value="dark" selected>Dark</option>
+                  <option value="deep">Deep</option>
+                </select>
+              </div>
+              <div>
+                <label class="pref-label">Body type</label>
+                <select id="builderBody">
+                  <option>Athletic</option>
+                  <option>Slim</option>
+                  <option selected>Regular</option>
+                  <option>Broad</option>
+                  <option>Plus</option>
+                </select>
+              </div>
+              <div>
+                <label class="pref-label">Total budget</label>
+                <select id="builderBudget">
+                  <option>Under ₹2,000</option>
+                  <option selected>₹2,000–₹5,000</option>
+                  <option>₹5,000–₹10,000</option>
+                  <option>₹10,000+</option>
+                </select>
+              </div>
+              <div>
+                <label class="pref-label">Style vibe</label>
+                <select id="builderVibe">
+                  <option>Traditional</option>
+                  <option>Fusion</option>
+                  <option selected>Modern ethnic</option>
+                  <option>Minimal</option>
+                  <option>Bold & statement</option>
+                </select>
+              </div>
+            </div>
+            <div class="pref-row">
+              <label class="pref-label">Pincode</label>
+              <input type="text" id="builderPin" placeholder="560068" maxlength="6" value="560068" style="max-width:150px" />
+            </div>
+            <button class="go-btn" id="builderBtn">Build my outfit →</button>
+            <div class="err-msg" id="builderErr"></div>
+          </div>
+        </div>
+        <div class="col-right" id="builderResults">
+          <div class="empty-state"><div class="empty-icon">👗</div><div class="empty-text">Your complete outfit will appear here</div></div>
+        </div>
       </div>
     </div>
-  </section>
 
-  <section class="app-section" id="app">
-    <div class="app-wrap">
-      <div id="input-section">
-        <div class="section-title">Your garment</div>
-        <div class="upload-zone" id="dropzone">
-          <input type="file" accept="image/*" id="fileInput" />
-          <div class="upload-icon">📷</div>
-          <div class="upload-text">Drop your garment photo here</div>
-          <div class="upload-sub">or click to browse · JPG, PNG, WEBP</div>
-        </div>
-        <img id="preview" class="preview-img" alt="preview" />
-
-        <div class="divider"></div>
-        <div class="section-title">Your preferences</div>
-
-        <div class="pref-block">
-          <label class="pref-label">Skin tone</label>
-          <div class="skin-row">
-            <div class="skin-btn" style="background:#FFDAB9" data-tone="fair" title="Fair"></div>
-            <div class="skin-btn" style="background:#D4956A" data-tone="medium" title="Medium"></div>
-            <div class="skin-btn" style="background:#A0522D" data-tone="tan" title="Tan"></div>
-            <div class="skin-btn active" style="background:#6B3A2A" data-tone="dark" title="Dark"></div>
-            <div class="skin-btn" style="background:#3B1F15" data-tone="deep" title="Deep"></div>
-          </div>
-        </div>
-
-        <div class="pref-block">
-          <label class="pref-label">Occasion</label>
-          <div class="tag-row">
-            <button class="tag-btn active">Casual</button>
-            <button class="tag-btn">Wedding</button>
-            <button class="tag-btn">Festival</button>
-            <button class="tag-btn">Office</button>
-            <button class="tag-btn">Party</button>
-            <button class="tag-btn">Pooja</button>
-          </div>
-        </div>
-
-        <div class="filters-grid">
-          <div class="pref-block">
-            <label class="pref-label">Budget</label>
-            <select id="budget">
-              <option>Under ₹500</option>
-              <option selected>₹500 – ₹1,500</option>
-              <option>₹1,500 – ₹3,000</option>
-              <option>₹3,000+</option>
-            </select>
-          </div>
-          <div class="pref-block">
-            <label class="pref-label">Color preference</label>
-            <select id="colorPref">
-              <option value="light">Light / Pastels</option>
-              <option value="white">Crisp White</option>
-              <option value="contrast">Bold Contrast</option>
-              <option value="earthy">Earthy Tones</option>
-              <option value="any">Surprise me</option>
-            </select>
-          </div>
-          <div class="pref-block">
-            <label class="pref-label">Sleeve length</label>
-            <select id="sleeve">
-              <option>Half sleeve</option>
-              <option>Full sleeve</option>
-              <option>Sleeveless</option>
-              <option>Any</option>
-            </select>
-          </div>
-          <div class="pref-block">
-            <label class="pref-label">Fabric</label>
-            <select id="fabric">
-              <option>Cotton</option>
-              <option>Linen</option>
-              <option>Silk</option>
-              <option>Any</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="pref-block">
-          <label class="pref-label">Delivery pincode</label>
-          <input type="text" id="pincode" placeholder="e.g. 560068" maxlength="6" value="560068" />
-          <div class="pin-note" id="pinNote">Links will include your pincode where supported</div>
-        </div>
-
-        <div class="pref-block">
-          <label class="pref-label">Shop on</label>
-          <div class="plat-row">
-            <button class="plat-btn active">Amazon</button>
-            <button class="plat-btn active">Flipkart</button>
-            <button class="plat-btn active">Myntra</button>
-          </div>
-        </div>
-
-        <div class="pref-block">
-          <label class="pref-label">Anthropic API key <span class="key-hint">(stored only in your browser)</span></label>
-          <input type="password" id="apiKey" placeholder="sk-ant-..." />
-        </div>
-
-        <div class="divider"></div>
-        <button class="go-btn" id="goBtn">Find my matches →</button>
-        <div class="err-msg" id="errMsg"></div>
+    <!-- TAB 3: FIND THIS DRESS -->
+    <div class="tab-content" id="tab-finder">
+      <div class="page-header">
+        <h1>Find this dress</h1>
+        <p>Upload any outfit photo from Instagram, Pinterest, anywhere — we'll find it or similar products online</p>
       </div>
-
-      <div id="results-section" style="display:none"></div>
+      <div class="two-col">
+        <div class="col-left">
+          <div class="card">
+            <div class="card-title">The photo</div>
+            <div class="upload-zone" id="finderDrop">
+              <input type="file" accept="image/*" id="finderFile" />
+              <div class="upload-icon">🔍</div>
+              <div class="upload-text">Drop the outfit photo here</div>
+              <div class="upload-sub">Screenshot · Saved photo · Any source</div>
+            </div>
+            <img id="finderPreview" class="preview-img" alt="preview" />
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="filters-grid">
+              <div>
+                <label class="pref-label">Max budget</label>
+                <select id="finderBudget">
+                  <option>Under ₹500</option>
+                  <option selected>₹500–₹2,000</option>
+                  <option>₹2,000–₹5,000</option>
+                  <option>Any budget</option>
+                </select>
+              </div>
+              <div>
+                <label class="pref-label">Pincode</label>
+                <input type="text" id="finderPin" placeholder="560068" maxlength="6" value="560068" />
+              </div>
+            </div>
+            <button class="go-btn" id="finderBtn">Find similar products →</button>
+            <div class="err-msg" id="finderErr"></div>
+          </div>
+        </div>
+        <div class="col-right" id="finderResults">
+          <div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Similar products will appear here</div></div>
+        </div>
+      </div>
     </div>
-  </section>
+
+    <!-- TAB 4: COLOR PALETTE -->
+    <div class="tab-content" id="tab-palette">
+      <div class="page-header">
+        <h1>Color palette analyzer</h1>
+        <p>Upload any garment — get your color story, what pairs well, and what to avoid</p>
+      </div>
+      <div class="two-col">
+        <div class="col-left">
+          <div class="card">
+            <div class="card-title">Your garment</div>
+            <div class="upload-zone" id="paletteDrop">
+              <input type="file" accept="image/*" id="paletteFile" />
+              <div class="upload-icon">🎨</div>
+              <div class="upload-text">Drop garment photo here</div>
+              <div class="upload-sub">We'll extract its full color story</div>
+            </div>
+            <img id="palettePreview" class="preview-img" alt="preview" />
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="pref-row">
+              <label class="pref-label">Skin tone</label>
+              <div class="skin-row" id="paletteSkin">
+                <div class="skin-btn" style="background:#FFDAB9" data-tone="fair"></div>
+                <div class="skin-btn" style="background:#D4956A" data-tone="medium"></div>
+                <div class="skin-btn" style="background:#A0522D" data-tone="tan"></div>
+                <div class="skin-btn active" style="background:#6B3A2A" data-tone="dark"></div>
+                <div class="skin-btn" style="background:#3B1F15" data-tone="deep"></div>
+              </div>
+            </div>
+            <button class="go-btn" id="paletteBtn">Analyze my palette →</button>
+            <div class="err-msg" id="paletteErr"></div>
+          </div>
+        </div>
+        <div class="col-right" id="paletteResults">
+          <div class="empty-state"><div class="empty-icon">🎨</div><div class="empty-text">Your color palette will appear here</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: SAVED LOOKS -->
+    <div class="tab-content" id="tab-saved">
+      <div class="page-header">
+        <h1>Saved looks</h1>
+        <p>Revisit and share your favourite outfit suggestions</p>
+      </div>
+      <div id="savedGrid" class="saved-grid"></div>
+      <div id="savedEmpty" class="empty-state" style="margin-top:2rem">
+        <div class="empty-icon">🗂️</div>
+        <div class="empty-text">No saved looks yet — save outfits from Match Outfit or Outfit Builder!</div>
+      </div>
+    </div>
+
+  </main>
 
   <footer class="footer">
     <div class="footer-inner">
       <div class="logo" style="font-size:18px">Thread<span>Mind</span></div>
-      <p>AI-powered outfit matching for Indian fashion · Built with Claude AI</p>
-      <p class="footer-note">Your API key and images never leave your browser. No data is stored.</p>
+      <p>AI-powered fashion for India · Powered by Google Gemini · 100% free</p>
+      <p class="footer-note">Your key and images never leave your browser. Nothing stored on servers.</p>
     </div>
   </footer>
+
+  <div id="shareModal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-title">Share this look</div>
+      <textarea id="shareText" class="share-textarea" readonly></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="go-btn" onclick="copyShare()" style="flex:1">Copy to clipboard</button>
+        <button class="go-btn" onclick="closeShare()" style="flex:1;background:var(--tint);color:var(--ink);border:0.5px solid var(--border-md)">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script src="assets/js/app.js"></script>
 </body>
