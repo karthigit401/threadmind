@@ -1,11 +1,11 @@
 /* ThreadMind v2 — app.js | Gemini-powered */
- 
-const PROXY = 'https://hidden-river-ba9f.kgod6900.workers.dev/';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
- 
+
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+
 let matcherImg = null, finderImg = null, paletteImg = null;
 let savedLooks = JSON.parse(localStorage.getItem('threadmind_saved') || '[]');
- 
+
 /* ─────────────────────────────────────────
    INIT
 ───────────────────────────────────────── */
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('paletteBtn').addEventListener('click', runPalette);
   renderSaved();
 });
- 
+
 /* ─────────────────────────────────────────
    TABS
 ───────────────────────────────────────── */
@@ -34,7 +34,7 @@ function initTabs() {
     });
   });
 }
- 
+
 /* ─────────────────────────────────────────
    UPLOADS
 ───────────────────────────────────────── */
@@ -43,12 +43,12 @@ function initUploads() {
   setupUpload('finderFile', 'finderDrop', 'finderPreview', d => finderImg = d);
   setupUpload('paletteFile', 'paletteDrop', 'palettePreview', d => paletteImg = d);
 }
- 
+
 function setupUpload(inputId, zoneId, previewId, onLoad) {
   const input = document.getElementById(inputId);
   const zone = document.getElementById(zoneId);
   const preview = document.getElementById(previewId);
- 
+
   const handle = file => {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
@@ -61,13 +61,13 @@ function setupUpload(inputId, zoneId, previewId, onLoad) {
     };
     reader.readAsDataURL(file);
   };
- 
+
   input.addEventListener('change', e => handle(e.target.files[0]));
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--gold)'; });
   zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
   zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor = ''; handle(e.dataTransfer.files[0]); });
 }
- 
+
 /* ─────────────────────────────────────────
    SKIN + TAG BUTTONS
 ───────────────────────────────────────── */
@@ -79,57 +79,63 @@ function initSkinBtns() {
     });
   });
 }
- 
+
 function initTagBtns() {
   document.querySelectorAll('.tag-btn').forEach(btn => {
     btn.addEventListener('click', () => btn.classList.toggle('active'));
   });
 }
- 
+
 /* ─────────────────────────────────────────
    GEMINI API CALL
 ───────────────────────────────────────── */
 async function callGemini(prompt, imageBase64 = null) {
   const apiKey = document.getElementById('apiKey').value.trim();
-  if (!apiKey) throw new Error('Please paste your free Gemini API key in the bar above.');
- 
-  const parts = [{ text: prompt }];
-  if (imageBase64) {
-    parts.unshift({ inline_data: { mime_type: 'image/jpeg', data: imageBase64 } });
-  }
- 
-  const url = `${GEMINI_URL}?key=${apiKey}`;
-  const res = await fetch(url, {
+  if (!apiKey) throw new Error('Please paste your free Groq API key in the bar above.');
+
+  const userContent = imageBase64
+    ? [
+        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+        { type: 'text', text: prompt }
+      ]
+    : prompt;
+
+  const res = await fetch(GROQ_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
     body: JSON.stringify({
-      contents: [{ parts }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1500 }
+      model: GROQ_MODEL,
+      messages: [{ role: 'user', content: userContent }],
+      temperature: 0.7,
+      max_tokens: 1500
     })
   });
- 
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || `API error ${res.status}`);
   }
- 
+
   const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+  const text = data?.choices?.[0]?.message?.content || '{}';
   return text.replace(/```json|```/g, '').trim();
 }
- 
+
 /* ─────────────────────────────────────────
    HELPERS
 ───────────────────────────────────────── */
 function getActiveTags(selector) {
   return Array.from(document.querySelectorAll(`${selector}.active`)).map(b => b.textContent.trim()).join(', ') || 'Casual';
 }
- 
+
 function getActiveSkin(rowId) {
   const btn = document.querySelector(`#${rowId} .skin-btn.active`);
   return btn ? btn.dataset.tone : 'dark';
 }
- 
+
 function shopLinks(query, pin, platforms = ['Amazon', 'Flipkart', 'Myntra']) {
   const q = encodeURIComponent(query);
   const pinParam = pin ? `&pincode=${pin}` : '';
@@ -140,7 +146,7 @@ function shopLinks(query, pin, platforms = ['Amazon', 'Flipkart', 'Myntra']) {
   };
   return platforms.map(p => `<a href="${map[p][0]}" class="shop-link ${map[p][1]}" target="_blank" rel="noopener">${p} →</a>`).join('');
 }
- 
+
 function priceEstimate(budget) {
   const map = {
     'Under ₹500': ['~₹299', '~₹349', '~₹399'],
@@ -158,7 +164,7 @@ function priceEstimate(budget) {
   const arr = map[budget] || ['~₹799', '~₹999', '~₹1,299'];
   return { amz: arr[0], flip: arr[1], myn: arr[2] };
 }
- 
+
 function setLoading(elId, msg = 'Analysing...', sub = 'Powered by Google Gemini · Free') {
   document.getElementById(elId).innerHTML = `
     <div class="loading-state">
@@ -167,15 +173,15 @@ function setLoading(elId, msg = 'Analysing...', sub = 'Powered by Google Gemini 
       <div class="loading-sub">${sub}</div>
     </div>`;
 }
- 
+
 function setErr(elId, msg) {
   document.getElementById(elId).textContent = msg;
 }
- 
+
 function saveToLocalStorage() {
   localStorage.setItem('threadmind_saved', JSON.stringify(savedLooks));
 }
- 
+
 /* ─────────────────────────────────────────
    TAB 1: MATCHER
 ───────────────────────────────────────── */
@@ -189,10 +195,10 @@ async function runMatcher() {
   const skin = getActiveSkin('matcherSkin');
   const body = getActiveTags('.body-tag');
   const occ = getActiveTags('.occ-tag');
- 
+
   setLoading('matcherResults', 'Finding your perfect matches...', 'AI is reading your garment');
   document.getElementById('matcherBtn').disabled = true;
- 
+
   const prompt = `You are ThreadMind, an expert Indian fashion stylist. ${matcherImg ? 'Analyse the uploaded garment image.' : 'Assume a white Kerala kasavu mundu with gold border.'}
 Return ONLY valid JSON, no markdown fences:
 {
@@ -209,7 +215,7 @@ Return ONLY valid JSON, no markdown fences:
   ]
 }
 Give exactly 4 suggestions. Skin: ${skin}, Body: ${body}, Occasion: ${occ}, Budget: ${budget}, Color: ${color}, Sleeve: ${sleeve}, Fabric: ${fabric}. Prioritise colours that flatter ${skin} skin.`;
- 
+
   try {
     const raw = await callGemini(prompt, matcherImg);
     const result = JSON.parse(raw);
@@ -220,11 +226,11 @@ Give exactly 4 suggestions. Skin: ${skin}, Body: ${body}, Occasion: ${occ}, Budg
   }
   document.getElementById('matcherBtn').disabled = false;
 }
- 
+
 function renderMatcher(result, budget, pin) {
   const chips = [result.garment?.type, result.garment?.color, result.garment?.style].filter(Boolean).map(c => `<span class="chip">${c}</span>`).join('');
   const prices = priceEstimate(budget);
- 
+
   const cards = (result.suggestions || []).map((s, i) => `
     <div class="sug-card">
       <div class="sug-header">
@@ -242,7 +248,7 @@ function renderMatcher(result, budget, pin) {
         <button class="save-btn" onclick="saveLook('${encodeURIComponent(JSON.stringify({item:s.item,type:s.type,reason:s.reason,query:s.search_query}))}', 'Match')">Save ♡</button>
       </div>
     </div>`).join('');
- 
+
   document.getElementById('matcherResults').innerHTML = `
     <div class="analysis-card">
       <h3>Garment analysis</h3>
@@ -253,7 +259,7 @@ function renderMatcher(result, budget, pin) {
     ${pin ? `<p style="font-size:11px;color:var(--ink-faint);text-align:center;margin-top:10px">Prices are estimates · Pincode ${pin} · Confirm on each platform</p>` : ''}
   `;
 }
- 
+
 /* ─────────────────────────────────────────
    TAB 2: OUTFIT BUILDER
 ───────────────────────────────────────── */
@@ -265,10 +271,10 @@ async function runBuilder() {
   const budget = document.getElementById('builderBudget').value;
   const vibe = document.getElementById('builderVibe').value;
   const pin = document.getElementById('builderPin').value;
- 
+
   setLoading('builderResults', 'Building your complete outfit...', 'Top · Bottom · Footwear · Accessories');
   document.getElementById('builderBtn').disabled = true;
- 
+
   const prompt = `You are ThreadMind, an expert Indian fashion stylist. Create a complete outfit for: Occasion: ${occ}, Skin tone: ${skin}, Body type: ${body}, Budget: ${budget}, Style vibe: ${vibe}.
 Return ONLY valid JSON, no markdown fences:
 {
@@ -288,7 +294,7 @@ Return ONLY valid JSON, no markdown fences:
   "stylist_tip": "1 sentence pro tip to elevate the look"
 }
 Include: top, bottom, footwear, and 2 accessories. Keep total within ${budget}.`;
- 
+
   try {
     const raw = await callGemini(prompt);
     const result = JSON.parse(raw);
@@ -299,7 +305,7 @@ Include: top, bottom, footwear, and 2 accessories. Keep total within ${budget}.`
   }
   document.getElementById('builderBtn').disabled = false;
 }
- 
+
 function renderBuilder(result, pin) {
   const items = (result.items || []).map(item => `
     <div class="outfit-item">
@@ -315,7 +321,7 @@ function renderBuilder(result, pin) {
         </div>
       </div>
     </div>`).join('');
- 
+
   document.getElementById('builderResults').innerHTML = `
     <div class="analysis-card">
       <h3>${result.outfit_title || 'Your complete look'}</h3>
@@ -331,7 +337,7 @@ function renderBuilder(result, pin) {
     </div>
   `;
 }
- 
+
 /* ─────────────────────────────────────────
    TAB 3: FIND THIS DRESS
 ───────────────────────────────────────── */
@@ -340,10 +346,10 @@ async function runFinder() {
   if (!finderImg) { setErr('finderErr', 'Please upload a photo first.'); return; }
   const budget = document.getElementById('finderBudget').value;
   const pin = document.getElementById('finderPin').value;
- 
+
   setLoading('finderResults', 'Identifying the outfit...', 'AI is reading colors, cut & style');
   document.getElementById('finderBtn').disabled = true;
- 
+
   const prompt = `You are ThreadMind, a fashion identification expert. Analyse the uploaded outfit photo.
 Return ONLY valid JSON, no markdown fences:
 {
@@ -366,7 +372,7 @@ Return ONLY valid JSON, no markdown fences:
   ]
 }
 Give exactly 4 similar products within budget: ${budget}.`;
- 
+
   try {
     const raw = await callGemini(prompt, finderImg);
     const result = JSON.parse(raw);
@@ -377,11 +383,11 @@ Give exactly 4 similar products within budget: ${budget}.`;
   }
   document.getElementById('finderBtn').disabled = false;
 }
- 
+
 function renderFinder(result, pin) {
   const id = result.identified || {};
   const chips = [id.garment_type, id.color, id.style, id.fabric_guess].filter(Boolean).map(c => `<span class="chip">${c}</span>`).join('');
- 
+
   const cards = (result.similar_products || []).map(s => `
     <div class="sug-card">
       <div class="sug-header">
@@ -395,7 +401,7 @@ function renderFinder(result, pin) {
         <button class="save-btn" onclick="saveLook('${encodeURIComponent(JSON.stringify({item:s.name,type:'Similar',reason:s.match_reason,query:s.search_query}))}', 'Finder')">Save ♡</button>
       </div>
     </div>`).join('');
- 
+
   document.getElementById('finderResults').innerHTML = `
     <div class="analysis-card">
       <h3>What we found</h3>
@@ -406,7 +412,7 @@ function renderFinder(result, pin) {
     <div class="suggestions-grid">${cards}</div>
   `;
 }
- 
+
 /* ─────────────────────────────────────────
    TAB 4: COLOR PALETTE
 ───────────────────────────────────────── */
@@ -414,10 +420,10 @@ async function runPalette() {
   setErr('paletteErr', '');
   if (!paletteImg) { setErr('paletteErr', 'Please upload a garment photo first.'); return; }
   const skin = getActiveSkin('paletteSkin');
- 
+
   setLoading('paletteResults', 'Extracting your color story...', 'Reading hues, tones & undertones');
   document.getElementById('paletteBtn').disabled = true;
- 
+
   const prompt = `You are ThreadMind, a colour theory expert for Indian fashion. Analyse the uploaded garment's colors.
 Return ONLY valid JSON, no markdown fences:
 {
@@ -434,7 +440,7 @@ Return ONLY valid JSON, no markdown fences:
   "styling_tips": ["tip1", "tip2", "tip3"]
 }
 Give 5 hex suggestions, 4 pairs well, 2 avoid.`;
- 
+
   try {
     const raw = await callGemini(prompt, paletteImg);
     const result = JSON.parse(raw);
@@ -445,18 +451,18 @@ Give 5 hex suggestions, 4 pairs well, 2 avoid.`;
   }
   document.getElementById('paletteBtn').disabled = false;
 }
- 
+
 function renderPalette(result) {
   const swatches = (result.hex_suggestions || []).map(s => `
     <div class="swatch">
       <div class="swatch-color" style="background:${s.hex}"></div>
       <div class="swatch-name">${s.name}</div>
     </div>`).join('');
- 
+
   const pairsWell = (result.pairs_well_with || []).map(c => `<span class="good-tag">${c}</span>`).join('');
   const avoid = (result.avoid_with || []).map(c => `<span class="avoid-tag">${c}</span>`).join('');
   const tips = (result.styling_tips || []).map(t => `<li style="font-size:13px;color:var(--ink-muted);margin-bottom:5px;line-height:1.5">${t}</li>`).join('');
- 
+
   document.getElementById('paletteResults').innerHTML = `
     <div class="analysis-card">
       <h3>Your color palette</h3>
@@ -481,7 +487,7 @@ function renderPalette(result) {
     </div>
   `;
 }
- 
+
 /* ─────────────────────────────────────────
    SAVE / SHARE LOOKS
 ───────────────────────────────────────── */
@@ -505,7 +511,7 @@ function saveLook(encodedData, source) {
     console.error('Save error', e);
   }
 }
- 
+
 function renderSaved() {
   const grid = document.getElementById('savedGrid');
   const empty = document.getElementById('savedEmpty');
@@ -528,43 +534,43 @@ function renderSaved() {
       </div>
     </div>`).join('');
 }
- 
+
 function deleteLook(id) {
   savedLooks = savedLooks.filter(l => l.id !== id);
   saveToLocalStorage();
   renderSaved();
 }
- 
+
 function openShare(id) {
   const look = savedLooks.find(l => l.id === id);
   if (!look) return;
   document.getElementById('shareText').value =
 `🧵 ThreadMind Look
- 
+
 Item: ${look.item}
 Type: ${look.type}
 Why: ${look.reason}
- 
+
 🛍️ Shop it:
 Amazon: https://www.amazon.in/s?k=${encodeURIComponent(look.query)}
 Flipkart: https://www.flipkart.com/search?q=${encodeURIComponent(look.query)}
 Myntra: https://www.myntra.com/${encodeURIComponent(look.query.replace(/\s+/g,'-'))}
- 
+
 Found with ThreadMind — AI Fashion Assistant`;
   document.getElementById('shareModal').style.display = 'flex';
 }
- 
+
 function closeShare() {
   document.getElementById('shareModal').style.display = 'none';
 }
- 
+
 function copyShare() {
   const ta = document.getElementById('shareText');
   ta.select();
   document.execCommand('copy');
   alert('Copied to clipboard!');
 }
- 
+
 document.getElementById('shareModal').addEventListener('click', e => {
   if (e.target === document.getElementById('shareModal')) closeShare();
 });
